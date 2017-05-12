@@ -42,7 +42,7 @@ class NPI_API():
         self.build_banner()
         self.build_name_fields()
         self.build_npi_facility_fields()
-        self.build_submit_button()
+        self.build_buttons()
         self.build_results()
 
     def build_grids(self):
@@ -61,7 +61,7 @@ class NPI_API():
         self.buttonframe.columnconfigure(1, weight=1)
         self.buttonframe.columnconfigure(2, weight=0)
         self.buttonframe.rowconfigure(0)
-        self.resultsframe.columnconfigure(0)
+        self.resultsframe.columnconfigure(0, weight=1)
         self.resultsframe.rowconfigure(0)
         self.resultsframe.rowconfigure(1, weight=1)
 
@@ -161,27 +161,54 @@ class NPI_API():
                 padx=5,
                 )
 
-    def build_submit_button(self):
+    def build_buttons(self):
         self.submit_btn = tkinter.Button(
                 self.buttonframe,
                 text='Submit',
                 command=self.query_npi_api
                 )
         self.submit_btn.grid(
+                row=0, column=0,
+                sticky='ew',
+                pady=20,
+                padx=20,
+                )
+        self.clear_btn = tkinter.Button(
+                self.buttonframe,
+                text='Clear',
+                command=self.clear
+                )
+        self.clear_btn.grid(
                 row=0, column=1,
                 sticky='ew',
                 pady=20,
+                padx=20,
                 )
+        """
+        self.export_btn = tkinter.Button(
+                self.buttonframe,
+                text='Export to Clipboard',
+                command=self.export
+                )
+        self.export_btn.grid(
+                row=0, column=2,
+                sticky='ew',
+                pady=20,
+                )
+        """
 
     def build_results(self):
         self.results_win_match_records = tkinter.Label(
                 self.resultsframe,
-                text=self.TEST_TEXT,
+                bg='white',
                 )
-        self.results_win_match_records.grid(sticky='news')
-        self.results_win_data = tkinter.Label(
+        self.results_win_match_records.grid(
+                row=0,
+                sticky='news')
+        self.results_win_data = tkinter.Entry(
                 self.resultsframe,
-                text='data goes here',
+                relief='flat',
+                bg='white',
                 )
         self.results_win_data.grid(
                 row=1,
@@ -216,20 +243,27 @@ class NPI_API():
         response = session.get(url+final_var)
         res_json = json.loads(response.text)
         final_records_txt = 'There is/are {} matching results'.format(res_json['result_count'])
-        final_dr_txt = 'Physician name: {} {}, {}'.format(res_json['results'][0]['basic']['first_name'],
+        final_dr_txt = '{} {}, {} :: '.format(res_json['results'][0]['basic']['first_name'],
                                                             res_json['results'][0]['basic']['last_name'],
                                                             res_json['results'][0]['basic']['credential'])
-        final_npi_text = 'NPI: {}'.format(res_json['results'][0]['number'])
+        final_npi_text = '{}'.format(res_json['results'][0]['number'])
+        final_results_txt = final_dr_txt + '\n' + final_npi_text
         self.results_win_match_records.config(text=final_records_txt)
-        self.results_win_data.config(text=final_dr_txt + '\n' + final_npi_text)
- 
-        
+        self.results_win_data.insert(0, final_results_txt)
+        self.results_win_data.config(state='readonly', readonlybackground='white')
 
+
+    def clear(self):
+        self.results_win_match_records.config(text='')
+        self.results_win_data.config(state=tkinter.NORMAL)
+        self.results_win_data.delete(0, tkinter.END)
+        
+    
 
 if __name__ == '__main__':
     main_window = tkinter.Tk()
     main_window.title('P4 - NPI Registry Search')
-    main_window.geometry('435x350')
+    main_window.geometry('650x350')
     app = NPI_API(main_window)
     logging.info('NPI app opened at {}'.format(datetime.datetime.now()))
     main_window.mainloop()
